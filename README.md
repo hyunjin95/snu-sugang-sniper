@@ -24,7 +24,7 @@
     pip install bs4 selenium opencv-python
     ```
 
-2. `sugang.py` 에서 전역 변수들(`USER_ID`, `USER_PW`, `EXCLUDE_JUNIORS`, `REFRESH_INTERVAL_IN_SECONDS`) 설정
+2. `sugang.py` 에서 전역 변수들(`USER_ID`, `USER_PW`, `EXCLUDE_JUNIORS`, `REFRESH_INTERVAL_IN_SECONDS`, `WAIT_LIMIT_IN_SECONDS`) 설정
 3. `sugang.py` 실행
 
 ## 개발 환경
