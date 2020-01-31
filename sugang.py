@@ -14,13 +14,13 @@ from selenium.common.exceptions import NoSuchWindowException
 # 프로젝트 모듈
 from path import static_directory_path, webdriver_path, tf_model_path
 from image_processing import get_number_from_image
-from mnist import save_model
+from mnist import save_model, SingletonModel
 
 
 
 # 로그인에 사용되는 아이디와 비밀번호
 USER_ID = "YOUR_ID"
-USER_PW = "YOUR_PASSWORD"
+USER_PW = "YOUR_PW"
 # 강좌에 신입생 포함 유무. 1학기 재학생 수강신청 기간에만 True로 설정.
 EXCLUDE_JUNIORS = True
 # 새로고침 주기. 기본은 1초
@@ -151,6 +151,8 @@ if __name__ == "__main__":
     if not tf_model_path().exists():
         save_model()
 
+    # 인스턴스 초기 생성. 첫 생성을 시작 때 해서 Register에 걸리는 시간을 줄인다.
+    SingletonModel.instance()
     # 드라이버 로딩
     options = webdriver.ChromeOptions()
     # 해상도와 디스플레이 배율에 상관 없이 일관된 화면이 표시되도록 설정.
