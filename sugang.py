@@ -145,7 +145,6 @@ def handle_error(driver):
         snipe_vacancy(driver)
 
 
-
 if __name__ == "__main__":
     # 모델이 경로에 없을 경우 생성해준다.
     if not tf_model_path().exists():
