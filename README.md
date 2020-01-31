@@ -6,8 +6,11 @@
   1. `TensorFlow` 이용해서 `MNIST` 데이터셋으로 트레이닝한 모델 저장
   2. `Selenium`, `BeautifulSoup4`를 이용해서 수강신청 사이트 크롤링
   3. `OpenCV` 이용해서 수강신청 확인문자 이미지 추출 후 전처리
-  4. 저장되어 있는 모델을 이용해서 이미지에서 숫자 추출
+  4. 저장되어 있는 모델을 이용해서 이미지에서 숫자 인식
   5. 수강 신청!
+
+**NOTE: 기초적인 MNIST 모델을 사용하기 때문에 숫자 인식 성공률은 250회 실험 결과 약 76% 정도가 나왔음.**
+![success_rate](./static/success_rate.png)
 
 - 실행 환경
   - OS: `Windows 10 64bit 19H2`
