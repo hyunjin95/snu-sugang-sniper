@@ -1,8 +1,9 @@
+import math
+from io import BytesIO
+
 import cv2
 import numpy as np
-from io import BytesIO
 from scipy import ndimage
-import math
 
 from mnist import SingletonModel
 
