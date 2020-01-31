@@ -121,11 +121,12 @@ def rownum_vacancy_in_interested_lectures(driver):
 
 # 수강신청 확인문자를 읽어 입력 후 수강 신청 버튼 클릭.
 def register(driver, captcha_num):
-    driver.find_element_by_id("inputTextView").send_keys(captcha_num)
     try:
+        driver.find_element_by_id("inputTextView").send_keys(captcha_num)
         driver.find_element_by_xpath("//*[@id='content']/div/div[2]/div[2]/div[2]/a").click()
         WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.alert_is_present())
         alert = driver.switch_to.alert
+        
         # 인식이 잘못 되었을 경우
         if "일치하지" in alert.text:
             handle_error(driver)
@@ -164,5 +165,5 @@ if __name__ == "__main__":
     driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
 
     # 관심강좌 중 빈 자리 탐색하고, 있으면 수강 신청.
-    snipe_vacancy(driver)
-    # test_snipe_vacancy_without_loop(driver)
+    # snipe_vacancy(driver)
+    test_snipe_vacancy_without_loop(driver)
