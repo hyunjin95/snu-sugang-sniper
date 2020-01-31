@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 from io import BytesIO
+from mnist import predict
+from scipy import ndimage
+import math
 
 
 # 수강신청 확인문자 이미지를 읽어서 해당 숫자 리턴.
@@ -14,7 +17,7 @@ def get_number_from_image(driver):
     processed_img, processed_img_inverse = _preprocess_images(img)
     # 자릿수별로 이미지 나눈 후 한 자리씩 예측한 후 결과값 리턴
     tens, ones = divide_image(img, processed_img, processed_img_inverse)
-    # return predict(tens, ones)
+    return predict_double_digits(tens, ones)
 
 
 # 이미지 위치와 크기 리턴.
@@ -52,34 +55,84 @@ def _preprocess_images(img):
 
 # 2자릿수 숫자의 이미지를 한 자릿수 숫자 2개의 이미지로 분리
 def divide_image(img, processed_img, processed_img_inverse):
+    # findContours 함수를 이용해서 숫자 범위들 찾기.
     contours, hierachy = cv2.findContours(processed_img_inverse, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return_img_locations = []
 
+    # cnt 순서가 왼쪽->오른쪽 순서로 항상 보장이 되지 않기 때문에 x 좌표값을 체크해서 순서 정해줌.
     for cnt in contours:
+        # 찾은 Contour들의 직사각형 그리기
         x, y, w, h = cv2.boundingRect(cnt)
         location = {"x": x, "y": y, "w": w, "h": h}
-        cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 1)
+        # 너무 작은 값은 무시하도록 높이가 8px 이상일 때만 저장.
         if h >= 8:
             if not return_img_locations or return_img_locations[0].get("x") < x:
                 return_img_locations.append(location)
             else:
                 return_img_locations.insert(0, location)
 
+    # 좌표값들 변환
     loc_tens, loc_ones = return_img_locations[0], return_img_locations[1]
     tens_x, tens_y, tens_w, tens_h = loc_tens.get("x"), loc_tens.get("y"), loc_tens.get("w"), loc_tens.get("h")
     ones_x, ones_y, ones_w, ones_h = loc_ones.get("x"), loc_ones.get("y"), loc_ones.get("w"), loc_ones.get("h")
 
-    tens = processed_img[tens_y:tens_y+tens_h, tens_x:tens_x+tens_w]
-    ones = processed_img[ones_y:ones_y+ones_h, ones_x:ones_x+ones_w]
+    # 이미지 나누기
+    tens = processed_img_inverse[tens_y:tens_y+tens_h, tens_x:tens_x+tens_w]
+    ones = processed_img_inverse[ones_y:ones_y+ones_h, ones_x:ones_x+ones_w]
 
-    cv2.imshow("img", img)
-    cv2.waitKey(0)
-    cv2.imshow("img", tens)
-    cv2.waitKey(0)
-    cv2.imshow("img", ones)
-    cv2.waitKey(0)
+    # MNIST 이미지들과 동일하게 28x28 이미지로 변환.
+    resized_tens = cv2.resize(tens, (28, 28), interpolation=cv2.INTER_CUBIC)
+    resized_ones = cv2.resize(ones, (28, 28), interpolation=cv2.INTER_CUBIC)
+
+    # 예측 정확도를 높이기 위해 패딩 적용해서 숫자 가운데 위치
+    padded_tens = add_padings(tens)
+    padded_ones = add_padings(ones)
+
+    return (padded_tens, padded_ones)
+
+
+def add_padings(img):
+    rows, cols = img.shape
+    
+    if rows > cols:
+        factor = 20.0 / rows
+        rows, cols = 20, int(round(cols * factor))
+    else:
+        factor = 20.0 / cols
+        rows, cols = int(round(rows * factor)), 20
+    
+    img = cv2.resize(img, (cols, rows))
+    rows_padding = (int(math.ceil((28 - rows) / 2.0)), int(math.floor((28 - rows) / 2.0)))
+    cols_padding = (int(math.ceil((28 - cols) / 2.0)), int(math.floor((28 - cols) / 2.0)))
+    img = np.lib.pad(img, (rows_padding, cols_padding), 'constant')
+
+    shift_x, shift_y = get_best_shift(img)
+    return shift(img, shift_x, shift_y)
+
+
+def get_best_shift(img):
+    cy, cx = ndimage.measurements.center_of_mass(img)
+    rows, cols = img.shape
+
+    shift_x = np.round(cols/2.0 - cx).astype(int)
+    shift_y = np.round(rows/2.0 - cy).astype(int)
+
+    return (shift_x, shift_y)
+
+
+def shift(img, shift_x, shift_y):
+    rows, cols = img.shape
+    M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
+    return cv2.warpAffine(img, M, (cols, rows))
 
 
 # 이미지 2개 예측
-def predict(tens, ones):
-    return 00
+def predict_double_digits(tens, ones):
+    flatted_tens = tens.reshape(-1, 28*28) / 255.0
+    flatted_ones = ones.reshape(-1, 28*28) / 255.0
+
+    tens_prediction = np.argmax(predict(flatted_tens))
+    ones_prediction = np.argmax(predict(flatted_ones))
+
+    prediction = str(tens_prediction) + str(ones_prediction)
+    return prediction
