@@ -30,6 +30,9 @@ WAIT_LIMIT_IN_SECONDS = 10
 # 관심 강좌에서 자리가 비는 강의를 찾아서 수강 신청해준다.
 def snipe_vacancy(driver):
     try:
+        # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 모두 지워줌.
+        driver.delete_all_cookies()
+
         login(driver)
         # 로그인 후 로딩이 될 때까지 기다려준다.
         WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
@@ -48,7 +51,7 @@ def snipe_vacancy(driver):
 
         # 빈 강의가 있으면 비프음으로 알린 후 수강 신청
         MessageBeep()
-        captcha_num = get_number_from_image(driver)
+        captcha_num = get_number_from_image(driver)        
         register(driver, captcha_num)
     except BaseException:
         print(format_exc())
@@ -119,14 +122,23 @@ def rownum_vacancy_in_interested_lectures(driver):
 # 수강신청 확인문자를 읽어 입력 후 수강 신청 버튼 클릭.
 def register(driver, captcha_num):
     driver.find_element_by_id("inputTextView").send_keys(captcha_num)
-    driver.find_element_by_xpath("//*[@id='content']/div/div[2]/div[2]/div[2]/a").click()
+    try:
+        driver.find_element_by_xpath("//*[@id='content']/div/div[2]/div[2]/div[2]/a").click()
+        WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.alert_is_present())
+        alert = driver.switch_to.alert
+        # 인식이 잘못 되었을 경우
+        if "일치하지" in alert.text:
+            handle_error(driver)
+            return
+    except TimeoutException:
+        pass
 
 
 # 에러가 생겼을 경우, alert 확인 후 작업 다시 시작.
 def handle_error(driver):
     try:
         # alert가 있을 경우 확인해줘야 함.
-        WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.alert_is_present())
+        WebDriverWait(driver, 1).until(EC.alert_is_present())
         alert = driver.switch_to.alert
         alert.accept()
     except TimeoutException:
@@ -134,8 +146,6 @@ def handle_error(driver):
     finally:
         # 에러가 발생했다고 알리는 비프음.
         Beep(2500, 1000)
-        # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 모두 지워줌.
-        driver.delete_all_cookies()
         # 다시 snipe_vacancy 함수 실행.
         snipe_vacancy(driver)
     
@@ -154,5 +164,5 @@ if __name__ == "__main__":
     driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
 
     # 관심강좌 중 빈 자리 탐색하고, 있으면 수강 신청.
-    # snipe_vacancy(driver)
-    test_snipe_vacancy_without_loop(driver)
+    snipe_vacancy(driver)
+    # test_snipe_vacancy_without_loop(driver)
