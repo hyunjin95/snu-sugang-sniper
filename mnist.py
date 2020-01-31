@@ -1,28 +1,18 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-import tensorflow as tf
 from pathlib import Path
+import tensorflow as tf
+import numpy as np
 from tensorflow import keras
 
 
 
-# MNIST용 간단 모델 생성
-def create_model():
-    model = tf.keras.models.Sequential([
-        keras.layers.Dense(512, activation='relu', input_shape=(784,)),
-        keras.layers.Dropout(0.2),
-        keras.layers.Dense(10, activation='softmax')
-    ])
-
-    model.compile(
-        optimizer='adam',
-        loss='sparse_categorical_crossentropy',
-        metrics=['accuracy']
-    )
-
-    return model
+def predict(img):
+    CURRENT_DIRECTORY = Path(__file__).parent.absolute()
+    model = tf.keras.models.load_model(str(CURRENT_DIRECTORY / 'mnist.h5'))
+    return model.predict(img)
 
 
-if __name__ == "__main__":
+def save_model():
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
 
     train_labels = train_labels
@@ -32,7 +22,7 @@ if __name__ == "__main__":
     test_images = test_images.reshape(-1, 28 * 28) / 255.0
 
     # 모델 생성 후 학습
-    model = create_model()
+    model = _create_model()
     model.fit(train_images, train_labels, epochs=5)
 
     # 파일이 위치한 디렉토리에 학습된 모델 저장
@@ -48,3 +38,20 @@ if __name__ == "__main__":
     # 로드된 모델 평가
     loss, acc = new_model.evaluate(test_images,  test_labels, verbose=2)
     print('Restored model, accuracy: {:5.2f}%'.format(100*acc))
+
+
+# MNIST용 간단 모델 생성
+def _create_model():
+    model = tf.keras.models.Sequential([
+        keras.layers.Dense(512, activation='relu', input_shape=(784,)),
+        keras.layers.Dropout(0.2),
+        keras.layers.Dense(10, activation='softmax')
+    ])
+
+    model.compile(
+        optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy']
+    )
+
+    return model
