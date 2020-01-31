@@ -50,15 +50,15 @@ def save_model():
 # MNIST용 간단 모델 생성
 def _create_model():
     model = tf.keras.models.Sequential([
-        keras.layers.Dense(512, activation='relu', input_shape=(784,)),
+        keras.layers.Dense(512, activation="relu", input_shape=(784,)),
         keras.layers.Dropout(0.2),
-        keras.layers.Dense(10, activation='softmax')
+        keras.layers.Dense(10, activation="softmax")
     ])
 
     model.compile(
-        optimizer='adam',
-        loss='sparse_categorical_crossentropy',
-        metrics=['accuracy']
+        optimizer="adam",
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
     )
 
     return model

@@ -105,7 +105,7 @@ def _add_padings(img):
     img = cv2.resize(img, (cols, rows))
     rows_padding = (int(math.ceil((28 - rows) / 2.0)), int(math.floor((28 - rows) / 2.0)))
     cols_padding = (int(math.ceil((28 - cols) / 2.0)), int(math.floor((28 - cols) / 2.0)))
-    img = np.lib.pad(img, (rows_padding, cols_padding), 'constant')
+    img = np.lib.pad(img, (rows_padding, cols_padding), "constant")
 
     shift_x, shift_y = _get_best_shift(img)
     return _shift(img, shift_x, shift_y)

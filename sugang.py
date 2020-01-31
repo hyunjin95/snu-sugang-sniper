@@ -19,8 +19,8 @@ from mnist import save_model
 
 
 # 로그인에 사용되는 아이디와 비밀번호
-USER_ID = 'YOUR_ID'
-USER_PW = 'YOUR_PASSWORD'
+USER_ID = "YOUR_ID"
+USER_PW = "YOUR_PASSWORD"
 # 강좌에 신입생 포함 유무. 1학기 재학생 수강신청 기간에만 True로 설정.
 EXCLUDE_JUNIORS = True
 # 새로고침 주기. 기본은 1초
