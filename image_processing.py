@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
 from io import BytesIO
-from mnist import predict
 from scipy import ndimage
 import math
+
+from mnist import SingletonModel
+
 
 
 # 수강신청 확인문자 이미지를 읽어서 해당 숫자 리턴.
@@ -15,9 +17,10 @@ def get_number_from_image(driver):
     location, size = _get_image_location_and_size(driver)
     img = _crop_screenshot(screenshot, location, size)
     processed_img, processed_img_inverse = _preprocess_images(img)
+
     # 자릿수별로 이미지 나눈 후 한 자리씩 예측한 후 결과값 리턴
-    tens, ones = divide_image(img, processed_img, processed_img_inverse)
-    return predict_double_digits(tens, ones)
+    tens, ones = _divide_image(img, processed_img, processed_img_inverse)
+    return _predict_double_digits(tens, ones)
 
 
 # 이미지 위치와 크기 리턴.
@@ -36,7 +39,6 @@ def _crop_screenshot(screenshot, location, size):
     top = location["y"]
     right = location["x"] + size["width"]
     bottom = location["y"] + size["height"]
-
     return img[top:bottom, left:right]
     
 
@@ -48,13 +50,11 @@ def _preprocess_images(img):
     gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
     # Contour를 위해 흑백 반전
     gray_inverse = cv2.bitwise_not(gray)
-    # 업스케일링
-    # upscale = cv2.resize(gray_inverse, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
     return (gray, gray_inverse)
 
 
 # 2자릿수 숫자의 이미지를 한 자릿수 숫자 2개의 이미지로 분리
-def divide_image(img, processed_img, processed_img_inverse):
+def _divide_image(img, processed_img, processed_img_inverse):
     # findContours 함수를 이용해서 숫자 범위들 찾기.
     contours, hierachy = cv2.findContours(processed_img_inverse, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return_img_locations = []
@@ -83,15 +83,16 @@ def divide_image(img, processed_img, processed_img_inverse):
     # MNIST 이미지들과 동일하게 28x28 이미지로 변환.
     resized_tens = cv2.resize(tens, (28, 28), interpolation=cv2.INTER_CUBIC)
     resized_ones = cv2.resize(ones, (28, 28), interpolation=cv2.INTER_CUBIC)
-
+    
     # 예측 정확도를 높이기 위해 패딩 적용해서 숫자 가운데 위치
-    padded_tens = add_padings(tens)
-    padded_ones = add_padings(ones)
+    padded_tens = _add_padings(tens)
+    padded_ones = _add_padings(ones)
 
     return (padded_tens, padded_ones)
 
 
-def add_padings(img):
+# MNIST 이미지 형식에 맞게 이미지에 패딩 추가
+def _add_padings(img):
     rows, cols = img.shape
     
     if rows > cols:
@@ -106,11 +107,12 @@ def add_padings(img):
     cols_padding = (int(math.ceil((28 - cols) / 2.0)), int(math.floor((28 - cols) / 2.0)))
     img = np.lib.pad(img, (rows_padding, cols_padding), 'constant')
 
-    shift_x, shift_y = get_best_shift(img)
-    return shift(img, shift_x, shift_y)
+    shift_x, shift_y = _get_best_shift(img)
+    return _shift(img, shift_x, shift_y)
 
 
-def get_best_shift(img):
+# 이미지가 이동할 값 리턴
+def _get_best_shift(img):
     cy, cx = ndimage.measurements.center_of_mass(img)
     rows, cols = img.shape
 
@@ -120,19 +122,21 @@ def get_best_shift(img):
     return (shift_x, shift_y)
 
 
-def shift(img, shift_x, shift_y):
+# 이미지 이동
+def _shift(img, shift_x, shift_y):
     rows, cols = img.shape
     M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
     return cv2.warpAffine(img, M, (cols, rows))
 
 
-# 이미지 2개 예측
-def predict_double_digits(tens, ones):
+# 숫자 이미지 2개 예측 후 2자릿수 스트링으로 리턴.
+def _predict_double_digits(tens, ones):
     flatted_tens = tens.reshape(-1, 28*28) / 255.0
     flatted_ones = ones.reshape(-1, 28*28) / 255.0
 
-    tens_prediction = np.argmax(predict(flatted_tens))
-    ones_prediction = np.argmax(predict(flatted_ones))
+    # 모델 로드 후 예측
+    model = SingletonModel.instance().model
+    tens_prediction, ones_prediction = np.argmax(model.predict(flatted_tens)), np.argmax(model.predict(flatted_ones))
 
     prediction = str(tens_prediction) + str(ones_prediction)
     return prediction

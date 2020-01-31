@@ -1,9 +1,7 @@
 # 파이썬 자체 내장 라이브러리들
-from pathlib import Path
 from re import search
 from time import sleep
-from winsound import MessageBeep, Beep
-from traceback import format_exc
+from winsound import MessageBeep
 
 # 따로 설치해야 하는 라이브러리
 from bs4 import BeautifulSoup
@@ -11,8 +9,12 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchWindowException
 
+# 프로젝트 모듈
+from path import static_directory_path, webdriver_path, tf_model_path
 from image_processing import get_number_from_image
+from mnist import save_model
 
 
 
@@ -32,13 +34,12 @@ def snipe_vacancy(driver):
     try:
         # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 모두 지워줌.
         driver.delete_all_cookies()
-
         login(driver)
         # 로그인 후 로딩이 될 때까지 기다려준다.
         WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
         row_num = -1
 
-        # 빈 자리 날 때까지 무한루프 돌면서 체크
+        # 빈 자리 날 때까지 무한루프 돌면서 확인
         while True:
             row_num = rownum_vacancy_in_interested_lectures(driver)
             if row_num >= 0:
@@ -53,26 +54,11 @@ def snipe_vacancy(driver):
         MessageBeep()
         captcha_num = get_number_from_image(driver)        
         register(driver, captcha_num)
+    except NoSuchWindowException:
+        # 윈도우가 없을 경우 크롬이 종료되었다고 가정.
+        driver.quit()
     except BaseException:
-        print(format_exc())
         handle_error(driver)    
-
-
-# 개발용 - 반복 없는 snipe_vacancy 함수
-def test_snipe_vacancy_without_loop(driver):
-    try:
-        login(driver)
-        WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
-
-        row_num = rownum_vacancy_in_interested_lectures(driver)
-        lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
-        lectures[row_num].click()
-
-        MessageBeep()
-        captcha_num = get_number_from_image(driver)
-        register(driver, captcha_num)
-    except BaseException:
-        print(format_exc())
 
 
 # 사이트에 접속 후 로그인.
@@ -128,11 +114,21 @@ def register(driver, captcha_num):
         alert = driver.switch_to.alert
         
         # 인식이 잘못 되었을 경우
-        if "일치하지" in alert.text:
+        if has_failed_registration(alert.text):
             handle_error(driver)
-            return
     except TimeoutException:
         pass
+
+
+# alert가 에러 메시지들 포함하고 있으면 에러로 생각.
+def has_failed_registration(text):
+    # TODO: 정원 초과한 경우 메시지도 추가해야 함. 또 성공했을 때 메시지는 따로 분류해서 성공 알려주고 싶다.
+    msgs = {"일치하지", "아닙니다", "종료되었습니다", "만료되었습니다", "로그인 후", "없습니다"}
+    
+    for msg in msg:
+        if msg in text:
+            return True
+    return False
 
 
 # 에러가 생겼을 경우, alert 확인 후 작업 다시 시작.
@@ -145,25 +141,25 @@ def handle_error(driver):
     except TimeoutException:
         pass
     finally:
-        # 에러가 발생했다고 알리는 비프음.
-        Beep(2500, 1000)
         # 다시 snipe_vacancy 함수 실행.
         snipe_vacancy(driver)
-    
+
+
 
 if __name__ == "__main__":
-    # 현재 파일이 위치한 경로 얻기
-    current_directory = Path(__file__).parent.absolute()
-    webdriver_path = str(current_directory / "chromedriver.exe")
+    # 모델이 경로에 없을 경우 생성해준다.
+    if not tf_model_path().exists():
+        save_model()
 
     # 드라이버 로딩
     options = webdriver.ChromeOptions()
     # 해상도와 디스플레이 배율에 상관 없이 일관된 화면이 표시되도록 설정.
     options.add_argument("window-size=1920x1080")
     options.add_argument("force-device-scale-factor=1")
-    driver = webdriver.Chrome(webdriver_path, options=options)
+    driver = webdriver.Chrome(str(webdriver_path()), options=options)
     driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
-
+    
     # 관심강좌 중 빈 자리 탐색하고, 있으면 수강 신청.
-    # snipe_vacancy(driver)
-    test_snipe_vacancy_without_loop(driver)
+    # 모델을 반복적으로 생성하지 않기 위해 메인에서 생성 후 함수 인자로 넘겨준다.
+    snipe_vacancy(driver)
+    

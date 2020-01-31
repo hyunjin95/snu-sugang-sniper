@@ -1,17 +1,35 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-from pathlib import Path
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
 
+from path import tf_model_path
 
 
-def predict(img):
-    CURRENT_DIRECTORY = Path(__file__).parent.absolute()
-    model = tf.keras.models.load_model(str(CURRENT_DIRECTORY / 'mnist.h5'))
-    return model.predict(img)
+
+# 모델을 한 번만 생성하기 위해 싱글톤 클래스 사용
+class SingletonModel:
+    _instance = None
+
+    @classmethod
+    def _get_instance(cls):
+        return cls._instance
+    
+    @classmethod
+    def instance(cls, *args, **kwargs):
+        cls._instance = cls(*args, **kwargs)
+        cls.instance = cls._get_instance
+        return cls._instance
+    
+    def __init__(self):
+        self._model = tf.keras.models.load_model(str(tf_model_path()))
+
+    @property
+    def model(self):
+        return self._model
 
 
+# MNIST 모델 저장
 def save_model():
     (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data()
 
@@ -25,19 +43,8 @@ def save_model():
     model = _create_model()
     model.fit(train_images, train_labels, epochs=5)
 
-    # 파일이 위치한 디렉토리에 학습된 모델 저장
-    CURRENT_DIRECTORY = Path(__file__).parent.absolute()
-    model.save(str(CURRENT_DIRECTORY / 'mnist.h5')) 
-
-    # 저장된 모델 불러오기
-    new_model = tf.keras.models.load_model(str(CURRENT_DIRECTORY / 'mnist.h5'))
-
-    # 모델 구조 요약해서 출력
-    new_model.summary()
-
-    # 로드된 모델 평가
-    loss, acc = new_model.evaluate(test_images,  test_labels, verbose=2)
-    print('Restored model, accuracy: {:5.2f}%'.format(100*acc))
+    # 주어진 경로에 모델 저장.
+    model.save(str(tf_model_path()))
 
 
 # MNIST용 간단 모델 생성
