@@ -35,7 +35,7 @@ if __name__ == "__main__":
     model = create_model()
     model.fit(train_images, train_labels, epochs=5)
 
-    # 현재 디렉토리에 모델 저장
+    # 파일이 위치한 디렉토리에 학습된 모델 저장
     CURRENT_DIRECTORY = Path(__file__).parent.absolute()
     model.save(str(CURRENT_DIRECTORY / 'mnist.h5')) 
 
