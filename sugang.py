@@ -125,7 +125,7 @@ def has_failed_registration(text):
     # TODO: 정원 초과한 경우 메시지도 추가해야 함. 또 성공했을 때 메시지는 따로 분류해서 성공 알려주고 싶다.
     msgs = {"일치하지", "아닙니다", "종료되었습니다", "만료되었습니다", "로그인 후", "없습니다"}
     
-    for msg in msg:
+    for msg in msgs:
         if msg in text:
             return True
     return False
