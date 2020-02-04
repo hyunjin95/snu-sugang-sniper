@@ -1,4 +1,4 @@
-# 파이썬 자체 내장 라이브러리들
+# 파이썬 자체 내장 라이브러리
 from re import search
 from time import sleep
 from winsound import MessageBeep
@@ -11,7 +11,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchWindowException, TimeoutException
 
 # 프로젝트 모듈
 from path import static_directory_path, webdriver_path, tf_model_path
@@ -27,7 +26,7 @@ USER_PW = "YOUR_PW"
 EXCLUDE_JUNIORS = True
 # 새로고침 주기.
 REFRESH_INTERVAL_IN_SECONDS = 0.5
-# 브라우저 로딩에 기다려줄 시간
+# 브라우저 로딩에 기다려줄 최대 시간
 WAIT_LIMIT_IN_SECONDS = 10
 
 
@@ -45,6 +44,7 @@ def load_driver():
 # 관심 강좌에서 자리가 비는 강의를 찾아서 수강 신청해준다.
 def snipe_vacancy():
     driver = load_driver()
+    print(get_current_time(), "-", "프로그램 시작")
     try:
         # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 모두 지워줌.
         driver.delete_all_cookies()
@@ -52,21 +52,19 @@ def snipe_vacancy():
         # 로그인 후 로딩이 될 때까지 기다려준다.
         WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
         # 빈 강좌를 찾는다.
-        row_num = find_vacancy(driver, REFRESH_INTERVAL_IN_SECONDS)
+        row_num = find_vacancy(driver)
 
         # 신청할 강의 클릭
         lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
         lectures[row_num].click()
+        lecture_name = driver.find_elements_by_css_selector("tr > td:nth-child(8) > a")[row_num].text
 
-        # 빈 강의가 있으면 비프음으로 알린 후 수강 신청
-        MessageBeep()
         captcha_num = get_number_from_image(driver)        
         register(driver, captcha_num)
-    except NoSuchWindowException:
-        # 윈도우가 없을 경우 크롬이 종료되었다고 가정.
-        driver.quit()
     except BaseException:
-        handle_error(driver)    
+        print_exc()
+        driver.quit()
+        snipe_vacancy()
 
 
 # 사이트에 접속 후 로그인.
@@ -86,11 +84,11 @@ def login(driver):
     
 
 # 빈 강좌를 찾을 때까지 실행.
-def find_vacancy(driver, sleep_duration):
+def find_vacancy(driver):
     row_num = -1
     while row_num == -1:
         row_num = rownum_in_interested_lectures(driver)
-        sleep(sleep_duration)
+        sleep(REFRESH_INTERVAL_IN_SECONDS)
     return row_num
 
 
