@@ -97,7 +97,7 @@ def rownum_in_interested_lectures(driver):
     # 관심강좌 메뉴 클릭 (새로고침은 막아 놓음)
     driver.find_element_by_xpath("//*[@id='submenu01']/li[3]/a").click()
     # 페이지가 로딩될 때까지 기다리기.
-    WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "tbl_basic")))
+    WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "tbl_sec")))
 
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
