@@ -52,10 +52,8 @@ def exit_driver(driver):
 def snipe_vacancy(driver=None):
     try:
         if driver is None:
-            # 드라이버 로딩
+            # 드라이버 불러오고 로그인.
             driver = load_driver()
-
-            # 로그인 후 로딩이 될 때까지 기다려준다.
             login(driver)
             WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
 
@@ -64,6 +62,7 @@ def snipe_vacancy(driver=None):
         # -1일 경우 루프가 200회 돌았을 때이므로 임의의 error 생성해서 재시작.
         if row_num == -1:
             assert False
+
         # 신청할 강의 클릭
         lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
         lectures[row_num].click()
@@ -79,7 +78,6 @@ def snipe_vacancy(driver=None):
         print_exc()
         exit_driver(driver)
         snipe_vacancy()
-
 
 
 # 사이트에 접속 후 로그인.
