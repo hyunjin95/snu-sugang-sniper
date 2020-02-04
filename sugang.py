@@ -38,12 +38,13 @@ def load_driver():
     options.add_argument("force-device-scale-factor=1")
     driver = webdriver.Chrome(str(webdriver_path()), options=options)
     driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
+    print(get_current_time(), "-", "드라이버 시작")
     return driver
 
 
 # 드라이버 종료 wrapper
 def exit_driver(driver):
-    print(get_current_time(), "-", "프로그램 종료")
+    print(get_current_time(), "-", "드라이버 종료")
     driver.quit()
 
 
@@ -52,7 +53,6 @@ def snipe_vacancy():
     try:
         # 드라이버 로딩
         driver = load_driver()
-        print(get_current_time(), "-", "프로그램 시작")
 
         # 로그인 후 로딩이 될 때까지 기다려준다.
         login(driver)
