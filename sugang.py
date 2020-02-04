@@ -46,7 +46,7 @@ def snipe_vacancy():
     driver = load_driver()
     print(get_current_time(), "-", "프로그램 시작")
     try:
-        # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 모두 지워줌.
+        # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 시작할 때 모두 지워줌.
         driver.delete_all_cookies()
         login(driver)
         # 로그인 후 로딩이 될 때까지 기다려준다.
@@ -60,7 +60,7 @@ def snipe_vacancy():
         lecture_name = driver.find_elements_by_css_selector("tr > td:nth-child(8) > a")[row_num].text
 
         captcha_num = get_number_from_image(driver)        
-        register(driver, captcha_num)
+        register(driver, captcha_num, lecture_name)
     except BaseException:
         print_exc()
         driver.quit()
