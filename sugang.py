@@ -73,7 +73,7 @@ def snipe_vacancy(driver=None):
         captcha_num = get_number_from_image(driver)        
         register(driver, captcha_num, lecture_name)
     except AssertionError:
-        print("루프 200회 도달, 드라이버 재시작.")
+        print(f"루프 {LOOP_LIMIT}회 도달, 드라이버 재시작.")
         exit_driver(driver)
         snipe_vacancy()
     except BaseException:
