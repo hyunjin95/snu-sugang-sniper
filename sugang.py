@@ -49,17 +49,17 @@ def exit_driver(driver):
 
 # 관심 강좌에서 자리가 비는 강의를 찾아서 수강 신청해준다.
 def snipe_vacancy():
-    driver = load_driver()
-    print(get_current_time(), "-", "프로그램 시작")
     try:
-        # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 시작할 때 모두 지워줌.
-        driver.delete_all_cookies()
-        login(driver)
+        # 드라이버 로딩
+        driver = load_driver()
+        print(get_current_time(), "-", "프로그램 시작")
+
         # 로그인 후 로딩이 될 때까지 기다려준다.
+        login(driver)
         WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
+
         # 빈 강좌를 찾는다.
         row_num = find_vacancy(driver)
-
         # 신청할 강의 클릭
         lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
         lectures[row_num].click()
@@ -92,9 +92,15 @@ def login(driver):
 # 빈 강좌를 찾을 때까지 실행.
 def find_vacancy(driver):
     row_num = -1
+    i = 0
     while row_num == -1:
+        # 루프문을 계속 돌리면 메모리 누수가 발생해서 크롬이 에러가 남. 200번마다 드라이버 리로드 시켜준다.
+        if i == 200:
+            break
+        i += 1
         row_num = rownum_in_interested_lectures(driver)
         sleep(REFRESH_INTERVAL_IN_SECONDS)
+
     return row_num
 
 
@@ -150,7 +156,7 @@ def register(driver, captcha_num, lecture_name):
         else:
             # 다른 메시지가 출력되면 신청 실패. 다시 처음으로 돌아가기.
             print_msg(False, lecture_name, msg)
-            snipe_vacancy(driver)
+            snipe_vacancy()
 
 
 # 수강신청시 로그 메시지 출력
