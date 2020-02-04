@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from scipy import ndimage
 
-from mnist import SingletonModel
+from mnist import load_model
 
 
 
@@ -136,7 +136,7 @@ def _predict_double_digits(tens, ones):
     flatted_ones = ones.reshape(-1, 28*28) / 255.0
 
     # 모델 로드 후 예측
-    model = SingletonModel.instance().model
+    model = load_model()
     tens_prediction, ones_prediction = np.argmax(model.predict(flatted_tens)), np.argmax(model.predict(flatted_ones))
 
     prediction = str(tens_prediction) + str(ones_prediction)

@@ -7,7 +7,7 @@ from path import tf_model_path
 
 
 # 모델을 한 번만 생성하기 위해 싱글톤 클래스 사용
-class SingletonModel:
+class _SingletonModel:
     _instance = None
 
     @classmethod
@@ -26,6 +26,16 @@ class SingletonModel:
     @property
     def model(self):
         return self._model
+
+
+# 모델 가져오기
+def load_model():
+    return instantiate_model().model
+
+
+# 인스턴스 가져오기
+def instantiate_model():
+    return _SingletonModel.instance()
 
 
 # MNIST 모델 저장
