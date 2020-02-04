@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # 프로젝트 모듈
 from path import static_directory_path, webdriver_path, tf_model_path
 from image_processing import get_number_from_image
-from mnist import save_model, SingletonModel
+from mnist import save_model, instantiate_model
 
 
 
@@ -49,17 +49,21 @@ def exit_driver(driver):
 
 
 # 관심 강좌에서 자리가 비는 강의를 찾아서 수강 신청해준다.
-def snipe_vacancy():
+def snipe_vacancy(driver=None):
     try:
-        # 드라이버 로딩
-        driver = load_driver()
+        if driver is None:
+            # 드라이버 로딩
+            driver = load_driver()
 
-        # 로그인 후 로딩이 될 때까지 기다려준다.
-        login(driver)
-        WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
+            # 로그인 후 로딩이 될 때까지 기다려준다.
+            login(driver)
+            WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
 
         # 빈 강좌를 찾는다.
         row_num = find_vacancy(driver)
+        # -1일 경우 루프가 200회 돌았을 때이므로 임의의 error 생성해서 재시작.
+        if row_num == -1:
+            assert False
         # 신청할 강의 클릭
         lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
         lectures[row_num].click()
@@ -67,10 +71,15 @@ def snipe_vacancy():
 
         captcha_num = get_number_from_image(driver)        
         register(driver, captcha_num, lecture_name)
+    except AssertionError:
+        print("루프 200회 도달, 드라이버 재시작.")
+        exit_driver(driver)
+        snipe_vacancy()
     except BaseException:
         print_exc()
         exit_driver(driver)
         snipe_vacancy()
+
 
 
 # 사이트에 접속 후 로그인.
@@ -94,7 +103,7 @@ def find_vacancy(driver):
     row_num = -1
     i = 0
     while row_num == -1:
-        # 루프문을 계속 돌리면 메모리 누수가 발생해서 크롬이 에러가 남. 200번마다 드라이버 리로드 시켜준다.
+        # 루프문을 계속 돌리면 메모리 때문에 크롬이 에러가 남. 200번마다 드라이버 리로드 시켜준다.
         if i == 200:
             break
         i += 1
@@ -154,9 +163,9 @@ def register(driver, captcha_num, lecture_name):
             print_msg(True, lecture_name, msg)
             exit_driver(driver)
         else:
-            # 다른 메시지가 출력되면 신청 실패. 다시 처음으로 돌아가기.
+            # 다른 메시지가 출력되면 신청 실패. 다시 돌아가기.
             print_msg(False, lecture_name, msg)
-            snipe_vacancy()
+            snipe_vacancy(driver)
 
 
 # 수강신청시 로그 메시지 출력
@@ -179,8 +188,8 @@ if __name__ == "__main__":
     if not tf_model_path().exists():
         save_model()
 
-    # 인스턴스 초기 생성. 첫 생성을 시작 때 해서 Register에 걸리는 시간을 줄인다.
-    SingletonModel.instance()
+    # 인스턴스 초기 생성. 첫 로드를 시작 때 해서 나중에 Register에 걸리는 시간을 줄인다.
+    instantiate_model()
     
     # 관심강좌 중 빈 자리 탐색하고, 있으면 수강 신청.
     # 모델을 반복적으로 생성하지 않기 위해 메인에서 생성 후 함수 인자로 넘겨준다.
