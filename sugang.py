@@ -41,6 +41,12 @@ def load_driver():
     return driver
 
 
+# 드라이버 종료 wrapper
+def exit_driver(driver):
+    print(get_current_time(), "-", "프로그램 종료")
+    driver.quit()
+
+
 # 관심 강좌에서 자리가 비는 강의를 찾아서 수강 신청해준다.
 def snipe_vacancy():
     driver = load_driver()
@@ -63,7 +69,7 @@ def snipe_vacancy():
         register(driver, captcha_num, lecture_name)
     except BaseException:
         print_exc()
-        driver.quit()
+        exit_driver(driver)
         snipe_vacancy()
 
 
@@ -140,7 +146,7 @@ def register(driver, captcha_num, lecture_name):
         # 수강신청 성공하면 그만 돌려도 되니까 드라이버 종료.
         if "수강신청되었습니다" in msg:
             print_msg(True, lecture_name, msg)
-            driver.quit()
+            exit_driver(driver)
         else:
             # 다른 메시지가 출력되면 신청 실패. 다시 처음으로 돌아가기.
             print_msg(False, lecture_name, msg)
