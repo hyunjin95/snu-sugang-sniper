@@ -31,8 +31,20 @@ REFRESH_INTERVAL_IN_SECONDS = 0.5
 WAIT_LIMIT_IN_SECONDS = 10
 
 
+# 드라이버 불러오기
+def load_driver():
+    options = webdriver.ChromeOptions()
+    # 해상도와 디스플레이 배율에 상관 없이 일관된 화면이 표시되도록 설정.
+    options.add_argument("window-size=1920x1080")
+    options.add_argument("force-device-scale-factor=1")
+    driver = webdriver.Chrome(str(webdriver_path()), options=options)
+    driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
+    return driver
+
+
 # 관심 강좌에서 자리가 비는 강의를 찾아서 수강 신청해준다.
-def snipe_vacancy(driver):
+def snipe_vacancy():
+    driver = load_driver()
     try:
         # 수강신청 사이트는 쿠키가 있으면 접속이 안 되기 때문에 모두 지워줌.
         driver.delete_all_cookies()
@@ -154,15 +166,7 @@ if __name__ == "__main__":
 
     # 인스턴스 초기 생성. 첫 생성을 시작 때 해서 Register에 걸리는 시간을 줄인다.
     SingletonModel.instance()
-    # 드라이버 로딩
-    options = webdriver.ChromeOptions()
-    # 해상도와 디스플레이 배율에 상관 없이 일관된 화면이 표시되도록 설정.
-    options.add_argument("window-size=1920x1080")
-    options.add_argument("force-device-scale-factor=1")
-    driver = webdriver.Chrome(str(webdriver_path()), options=options)
-    driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
     
     # 관심강좌 중 빈 자리 탐색하고, 있으면 수강 신청.
     # 모델을 반복적으로 생성하지 않기 위해 메인에서 생성 후 함수 인자로 넘겨준다.
-    snipe_vacancy(driver)
-    
+    snipe_vacancy()
