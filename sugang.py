@@ -2,6 +2,8 @@
 from re import search
 from time import sleep
 from winsound import MessageBeep
+from datetime import datetime
+from traceback import print_exc
 
 # 따로 설치해야 하는 라이브러리
 from bs4 import BeautifulSoup
@@ -9,7 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchWindowException
+from selenium.common.exceptions import NoSuchWindowException, TimeoutException
 
 # 프로젝트 모듈
 from path import static_directory_path, webdriver_path, tf_model_path
@@ -23,8 +25,8 @@ USER_ID = "YOUR_ID"
 USER_PW = "YOUR_PW"
 # 강좌에 신입생 포함 유무. 1학기 재학생 수강신청 기간에만 True로 설정.
 EXCLUDE_JUNIORS = True
-# 새로고침 주기. 기본은 1초
-REFRESH_INTERVAL_IN_SECONDS = 1
+# 새로고침 주기.
+REFRESH_INTERVAL_IN_SECONDS = 0.5
 # 브라우저 로딩에 기다려줄 시간
 WAIT_LIMIT_IN_SECONDS = 10
 
