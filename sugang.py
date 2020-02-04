@@ -123,43 +123,45 @@ def rownum_in_interested_lectures(driver):
 
 
 # 수강신청 확인문자를 읽어 입력 후 수강 신청 버튼 클릭.
-def register(driver, captcha_num):
+def register(driver, captcha_num, lecture_name):
+    msg = ""
+    # 빈 강의가 있으면 비프음으로 알린 후 수강 신청.
+    MessageBeep()
     try:
         driver.find_element_by_id("inputTextView").send_keys(captcha_num)
         driver.find_element_by_xpath("//*[@id='content']/div/div[2]/div[2]/div[2]/a").click()
+        
         WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.alert_is_present())
         alert = driver.switch_to.alert
-        
-        # 인식이 잘못 되었을 경우
-        if has_failed_registration(alert.text):
-            handle_error(driver)
-    except TimeoutException:
-        pass
 
-
-# alert가 에러 메시지들 포함하고 있으면 에러로 생각.
-def has_failed_registration(text):
-    # TODO: 정원 초과한 경우 메시지도 추가해야 함. 또 성공했을 때 메시지는 따로 분류해서 성공 알려주고 싶다.
-    msgs = {"일치하지", "아닙니다", "종료되었습니다", "만료되었습니다", "로그인 후", "없습니다"}
-    
-    for msg in msgs:
-        if msg in text:
-            return True
-    return False
-
-
-# 에러가 생겼을 경우, alert 확인 후 작업 다시 시작.
-def handle_error(driver):
-    try:
-        # alert가 있을 경우 확인해줘야 함.
-        WebDriverWait(driver, 1).until(EC.alert_is_present())
-        alert = driver.switch_to.alert
+        msg = alert.text
         alert.accept()
     except TimeoutException:
-        pass
+        print("알람이 떠야하는데 안 뜸.")
     finally:
-        # 다시 snipe_vacancy 함수 실행.
-        snipe_vacancy(driver)
+        # 수강신청 성공하면 그만 돌려도 되니까 드라이버 종료.
+        if "수강신청되었습니다" in msg:
+            print_msg(True, lecture_name, msg)
+            driver.quit()
+        else:
+            # 다른 메시지가 출력되면 신청 실패. 다시 처음으로 돌아가기.
+            print_msg(False, lecture_name, msg)
+            snipe_vacancy(driver)
+
+
+# 수강신청시 로그 메시지 출력
+def print_msg(is_success, lecture_name, msg):
+    str_is_success = "- 수강신청 성공!!!!!!!!!!!!!!!!! -" if is_success else "- 수강신청 실패... -"
+    current_time = get_current_time()
+
+    s = " ".join([current_time, lecture_name, str_is_success, msg])
+    print(s)
+
+
+# 현재 시간 스트링
+def get_current_time():
+    now = datetime.now()
+    return now.strftime("[%H:%M:%S]")
 
 
 if __name__ == "__main__":
