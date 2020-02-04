@@ -51,14 +51,8 @@ def snipe_vacancy():
         login(driver)
         # 로그인 후 로딩이 될 때까지 기다려준다.
         WebDriverWait(driver, WAIT_LIMIT_IN_SECONDS).until(EC.presence_of_element_located((By.CLASS_NAME, "log_ok")))
-        row_num = -1
-
-        # 빈 자리 날 때까지 무한루프 돌면서 확인
-        while True:
-            row_num = rownum_vacancy_in_interested_lectures(driver)
-            if row_num >= 0:
-                break
-            sleep(REFRESH_INTERVAL_IN_SECONDS) 
+        # 빈 강좌를 찾는다.
+        row_num = find_vacancy(driver, REFRESH_INTERVAL_IN_SECONDS)
 
         # 신청할 강의 클릭
         lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
@@ -91,8 +85,17 @@ def login(driver):
     driver.find_element_by_xpath("//*[@id='CO010']/div/div/p[3]/a").click()
     
 
+# 빈 강좌를 찾을 때까지 실행.
+def find_vacancy(driver, sleep_duration):
+    row_num = -1
+    while row_num == -1:
+        row_num = rownum_in_interested_lectures(driver)
+        sleep(sleep_duration)
+    return row_num
+
+
 # 관심 강좌 목록 체크, 빈 강좌 있으면 해당 행 번호 리턴
-def rownum_vacancy_in_interested_lectures(driver):
+def rownum_in_interested_lectures(driver):
     # 관심강좌 메뉴 클릭 (새로고침은 막아 놓음)
     driver.find_element_by_xpath("//*[@id='submenu01']/li[3]/a").click()
     # 페이지가 로딩될 때까지 기다리기.
