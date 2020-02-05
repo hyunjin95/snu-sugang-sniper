@@ -41,4 +41,4 @@
 - 브라우저: `Chrome 79.0.3945.130`
 - 언어: [`Python 3.7.6`](https://www.python.org/downloads/release/python-376/)
 - 기타: [`ChromeDriver 79.0.3945.36`](https://chromedriver.chromium.org/downloads), [`TensorFlow 2.0`](https://www.tensorflow.org/install)
-- 시기: 2020년 2월
+- 시기: `2020년 2월`
