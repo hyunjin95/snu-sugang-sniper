@@ -15,15 +15,18 @@
 - 실행 환경
   - OS: `Windows 10 64bit 19H2`
   - Broswer: `Chrome 79.0.3945.130 64bit`
+  - Programming Langauge: `Python 3.7.6`
   - 시기: 2020년 2월
 
 ## 사용 방법
 
 1. 레포 다운 후 필요한 툴과 pip 패키지들 설치
 
-    툴: `Chrome`, `ChromeDriver`, `Python 3.7`
+    툴: `Chrome`, `ChromeDriver`, `Python`
 
-    **ChromeDriver는 Chrome과 버전이 같아야 함** (예: Chrome 79.x <-> ChromeDriver 79.x)
+    **`ChromeDriver`는 `Chrome`과 버전 앞자리 수가 같아야 함** (예: Chrome 79.x <-> ChromeDriver 79.x)
+
+    **`2020년 2월` 현재 `TensorFlow`는 `Python 3.7`까지만 지원하므로 `Python 3.8` 이상은 실행 불가.**
 
     ```shell
     pip install --upgrade TensorFlow
