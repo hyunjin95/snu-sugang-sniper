@@ -65,11 +65,7 @@ def snipe_vacancy(driver=None):
         if row_num == -1:
             assert False
 
-        # 신청할 강의 클릭
-        lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
-        lectures[row_num].click()
-        lecture_name = driver.find_elements_by_css_selector("tr > td:nth-child(8) > a")[row_num].text
-
+        lecture_name = lecture_name_to_register(driver, row_num)
         captcha_num = get_number_from_image(driver)        
         register(driver, captcha_num, lecture_name)
     except AssertionError:
@@ -102,10 +98,8 @@ def login(driver):
 def find_vacancy(driver):
     row_num = -1
     i = 0
-    while row_num == -1:
-        # 루프문을 계속 돌리면 메모리 때문에 크롬이 에러가 남. 정해진 횟수마다 드라이버 리로드 시켜준다.
-        if i == LOOP_LIMIT:
-            break
+    # 루프문을 계속 돌리면 메모리 때문에 크롬이 에러가 남. 정해진 횟수마다 드라이버 리로드 시켜준다.
+    while i < LOOP_LIMIT and row_num == -1:
         i += 1
         row_num = rownum_in_interested_lectures(driver)
         sleep(REFRESH_INTERVAL_IN_SECONDS)
@@ -139,6 +133,14 @@ def rownum_in_interested_lectures(driver):
         if registered < maximum:
             return index
     return -1
+
+
+# 수강신청할 강좌 클릭후 강좌 이름 리턴
+def lecture_name_to_register(driver, row_num):
+    lectures = driver.find_elements_by_css_selector("tr > td:nth-child(1) > input[type=checkbox]:nth-child(1)")
+    lectures[row_num].click()
+    lecture_name = driver.find_elements_by_css_selector("tr > td:nth-child(8) > a")[row_num].text
+    return lecture_name
 
 
 # 수강신청 확인문자를 읽어 입력 후 수강 신청 버튼 클릭.
