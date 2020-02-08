@@ -6,28 +6,6 @@ from path import tf_model_path
 
 
 
-# 모델을 한 번만 생성하기 위해 싱글톤 클래스 사용
-class _SingletonModel:
-    _instance = None
-
-    @classmethod
-    def _get_instance(cls):
-        return cls._instance
-    
-    @classmethod
-    def instance(cls, *args, **kwargs):
-        cls._instance = cls(*args, **kwargs)
-        cls.instance = cls._get_instance
-        return cls._instance
-    
-    def __init__(self):
-        self._model = tf.keras.models.load_model(str(tf_model_path()))
-
-    @property
-    def model(self):
-        return self._model
-
-
 # 모델 가져오기
 def load_model():
     return instantiate_model().model
@@ -54,6 +32,28 @@ def save_model():
 
     # 주어진 경로에 모델 저장.
     model.save(str(tf_model_path()))
+
+
+# 모델을 한 번만 생성하기 위해 싱글톤 클래스 사용
+class _SingletonModel:
+    _instance = None
+
+    @classmethod
+    def _get_instance(cls):
+        return cls._instance
+    
+    @classmethod
+    def instance(cls, *args, **kwargs):
+        cls._instance = cls(*args, **kwargs)
+        cls.instance = cls._get_instance
+        return cls._instance
+    
+    def __init__(self):
+        self._model = tf.keras.models.load_model(str(tf_model_path()))
+
+    @property
+    def model(self):
+        return self._model
 
 
 # MNIST용 간단 모델 생성
