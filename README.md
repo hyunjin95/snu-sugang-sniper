@@ -16,9 +16,9 @@
 
 1. 레포 다운 후 필요한 프로그램 설치
 
-    프로그램: **`Chrome`, `ChromeDriver`, `Python`**
+    프로그램: **`Chrome`, `ChromeDriver`, `Python 3`**
 
-    `ChromeDriver`는 `Chrome`과 버전 앞자리 수가 같아야 함 (예: Chrome 79.x <-> ChromeDriver 79.x)
+    `ChromeDriver`는 `Chrome`과 버전 앞자리 수가 같아야 함 (예: Chrome 79.x <-> ChromeDriver 79.x). 현재 `static` 폴더 안에 있는 파일의 드라이버 버전은 [`개발 환경`](#개발-환경) 참조.
 
     `2020년 2월` 현재 `TensorFlow`는 `Python 3.7`까지만 지원하므로 `Python 3.8` 이상은 실행 불가.
 
