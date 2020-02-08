@@ -17,10 +17,10 @@ def get_number_from_image(driver):
     # 이미지의 위치, 크기 가져와서 스크린샷에서 이미지 crop
     location, size = _get_image_location_and_size(driver)
     img = _crop_screenshot(screenshot, location, size)
-    processed_img, processed_img_inverse = _preprocess_images(img)
+    preprocessed_img = _preprocess_images(img)
 
     # 자릿수별로 이미지 나눈 후 한 자리씩 예측한 후 결과값 리턴
-    tens, ones = _divide_image(img, processed_img, processed_img_inverse)
+    tens, ones = _divide_image(img, preprocessed_img)
     return _predict_double_digits(tens, ones)
 
 
@@ -51,35 +51,23 @@ def _preprocess_images(img):
     gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
     # Contour를 위해 흑백 반전
     gray_inverse = cv2.bitwise_not(gray)
-    return (gray, gray_inverse)
+    return gray_inverse
 
 
 # 2자릿수 숫자의 이미지를 한 자릿수 숫자 2개의 이미지로 분리
-def _divide_image(img, processed_img, processed_img_inverse):
+def _divide_image(img, preprocessed_img):
     # findContours 함수를 이용해서 숫자 범위들 찾기.
-    contours, hierachy = cv2.findContours(processed_img_inverse, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    return_img_locations = []
-
-    # cnt 순서가 왼쪽->오른쪽 순서로 항상 보장이 되지 않기 때문에 x 좌표값을 체크해서 순서 정해줌.
-    for cnt in contours:
-        # 찾은 Contour들의 직사각형 그리기
-        x, y, w, h = cv2.boundingRect(cnt)
-        location = {"x": x, "y": y, "w": w, "h": h}
-        # 너무 작은 값은 무시하도록 높이가 8px 이상일 때만 저장.
-        if h >= 8:
-            if not return_img_locations or return_img_locations[0].get("x") < x:
-                return_img_locations.append(location)
-            else:
-                return_img_locations.insert(0, location)
+    contours, hierachy = cv2.findContours(preprocessed_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    img_locations = _get_img_locations(contours)
 
     # 좌표값들 변환
-    loc_tens, loc_ones = return_img_locations[0], return_img_locations[1]
+    loc_tens, loc_ones = img_locations[0], img_locations[1]
     tens_x, tens_y, tens_w, tens_h = loc_tens.get("x"), loc_tens.get("y"), loc_tens.get("w"), loc_tens.get("h")
     ones_x, ones_y, ones_w, ones_h = loc_ones.get("x"), loc_ones.get("y"), loc_ones.get("w"), loc_ones.get("h")
 
     # 이미지 나누기
-    tens = processed_img_inverse[tens_y:tens_y+tens_h, tens_x:tens_x+tens_w]
-    ones = processed_img_inverse[ones_y:ones_y+ones_h, ones_x:ones_x+ones_w]
+    tens = preprocessed_img[tens_y:tens_y+tens_h, tens_x:tens_x+tens_w]
+    ones = preprocessed_img[ones_y:ones_y+ones_h, ones_x:ones_x+ones_w]
 
     # MNIST 이미지들과 동일하게 28x28 이미지로 변환.
     resized_tens = cv2.resize(tens, (28, 28), interpolation=cv2.INTER_CUBIC)
@@ -90,6 +78,25 @@ def _divide_image(img, processed_img, processed_img_inverse):
     padded_ones = _add_padings(ones)
 
     return (padded_tens, padded_ones)
+
+
+# 이미지들의 좌표 얻기
+def _get_img_locations(contours):
+    image_locations = []
+
+    # cnt 순서가 왼쪽->오른쪽 순서로 항상 보장이 되지 않기 때문에 x 좌표값을 체크해서 순서 정해줌.
+    for cnt in contours:
+        # 찾은 Contour들의 직사각형 그리기
+        x, y, w, h = cv2.boundingRect(cnt)
+        location = {"x": x, "y": y, "w": w, "h": h}
+        # 너무 작은 값은 무시하도록 높이가 8px 이상일 때만 저장.
+        if h >= 8:
+            if not image_locations or image_locations[0].get("x") < x:
+                image_locations.append(location)
+            else:
+                image_locations.insert(0, location)
+    
+    return image_locations
 
 
 # MNIST 이미지 형식에 맞게 이미지에 패딩 추가
