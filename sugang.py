@@ -66,7 +66,7 @@ def snipe_vacancy(driver=None):
             assert False
 
         lecture_name = lecture_name_to_register(driver, row_num)
-        captcha_num = get_number_from_image(driver)        
+        captcha_num = get_number_from_image(driver)
         register(driver, captcha_num, lecture_name)
     except AssertionError:
         print(f"루프 {LOOP_LIMIT}회 도달, 드라이버 재시작.")
