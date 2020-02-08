@@ -17,7 +17,7 @@ def get_number_from_image(driver):
     # 이미지의 위치, 크기 가져와서 스크린샷에서 이미지 crop
     location, size = _get_image_location_and_size(driver)
     img = _crop_screenshot(screenshot, location, size)
-    preprocessed_img = _preprocess_images(img)
+    preprocessed_img = _preprocess_image(img)
 
     # 자릿수별로 이미지 나눈 후 한 자리씩 예측한 후 결과값 리턴
     tens, ones = _divide_image(img, preprocessed_img)
@@ -44,7 +44,7 @@ def _crop_screenshot(screenshot, location, size):
     
 
 # 이미지 전처리
-def _preprocess_images(img):
+def _preprocess_image(img):
     # 그레이스케일로 변환
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # 이진화 처리
