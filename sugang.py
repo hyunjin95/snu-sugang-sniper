@@ -32,26 +32,8 @@ WAIT_LIMIT_IN_SECONDS = 10
 LOOP_LIMIT = 500
 
 
-# 드라이버 불러오기
-def load_driver():
-    options = webdriver.ChromeOptions()
-    # 해상도와 디스플레이 배율에 상관 없이 일관된 화면이 표시되도록 설정.
-    options.add_argument("window-size=1920x1080")
-    options.add_argument("force-device-scale-factor=1")
-    driver = webdriver.Chrome(str(webdriver_path()), options=options)
-    driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
-    print(get_current_time(), "-", "드라이버 시작")
-    return driver
-
-
-# 드라이버 종료 wrapper
-def exit_driver(driver):
-    print(get_current_time(), "-", "드라이버 종료")
-    driver.quit()
-
-
 # 관심 강좌에서 자리가 비는 강의를 찾아서 수강 신청해준다.
-def snipe_vacancy(driver=None):
+def run(driver=None):
     try:
         if driver is None:
             # 드라이버 불러오고 로그인.
@@ -71,11 +53,29 @@ def snipe_vacancy(driver=None):
     except AssertionError:
         print(f"루프 {LOOP_LIMIT}회 도달, 드라이버 재시작.")
         exit_driver(driver)
-        snipe_vacancy()
+        run()
     except BaseException:
         print_exc()
         exit_driver(driver)
-        snipe_vacancy()
+        run()
+
+
+# 드라이버 불러오기
+def load_driver():
+    options = webdriver.ChromeOptions()
+    # 해상도와 디스플레이 배율에 상관 없이 일관된 화면이 표시되도록 설정.
+    options.add_argument("window-size=1920x1080")
+    options.add_argument("force-device-scale-factor=1")
+    driver = webdriver.Chrome(str(webdriver_path()), options=options)
+    driver.implicitly_wait(WAIT_LIMIT_IN_SECONDS)
+    print(get_current_time(), "-", "드라이버 시작")
+    return driver
+
+
+# 드라이버 종료 wrapper
+def exit_driver(driver):
+    print(get_current_time(), "-", "드라이버 종료")
+    driver.quit()
 
 
 # 사이트에 접속 후 로그인.
@@ -167,7 +167,7 @@ def register(driver, captcha_num, lecture_name):
         else:
             # 다른 메시지가 출력되면 신청 실패. 다시 돌아가기.
             print_msg(False, lecture_name, msg)
-            snipe_vacancy(driver)
+            run(driver)
 
 
 # 수강신청시 로그 메시지 출력
@@ -194,4 +194,4 @@ if __name__ == "__main__":
     instantiate_model()
     
     # 관심강좌 중 빈 자리 탐색하고, 있으면 수강 신청.
-    snipe_vacancy()
+    run()
